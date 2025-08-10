@@ -5,36 +5,52 @@ import TempAndDetails from "./components/TempAndDetails";
 import TimeAndLocation from "./components/TimeAndLocation";
 import TopButtons from "./components/TopButtons";
 import getFormattedWeatherData from "./services/weatherService";
-import { getFavorites } from "./api";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const App = () => {
-  const [query, setQuery] = useState({ q: localStorage.getItem("lastQuery") });
-  //const [query, setQuery] = useState({ q: "" });
+  const [query, setQuery] = useState({ q: localStorage.getItem("lastQuery") || "" });
   const [units, setUnits] = useState("metric");
   const [weather, setWeather] = useState(null);
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
-    fetchFavorites();
+    // Load favorites from localStorage on mount
+    const storedFavs = JSON.parse(localStorage.getItem("favorites")) || [];
+    setFavorites(storedFavs);
   }, []);
 
-  const fetchFavorites = async () => {
-    const favs = await getFavorites();
+  const saveFavorites = (favs) => {
+    localStorage.setItem("favorites", JSON.stringify(favs));
     setFavorites(favs);
   };
 
+  const addFavorite = (city) => {
+    if (!favorites.some((fav) => fav.name === city.name)) {
+      const updated = [...favorites, city];
+      saveFavorites(updated);
+    }
+  };
+
+  const removeFavorite = (id) => {
+    const updated = favorites.filter((fav) => fav.id !== id);
+    saveFavorites(updated);
+  };
+
   const getWeather = async () => {
-    const message = query.q ? query.q : "current location";
+
+    const formatCityName = (name) => {
+  return name
+    ? name.trim().toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase())
+    : name;
+};
+    const message = query.q ? formatCityName(query.q)  : "current location";
     toast.info(`Fetching weather data for ${message}`);
 
-    await getFormattedWeatherData({ ...query, units }).then((data) => {
-      toast.success(`Fetched weather data for ${data.name}, ${data.country}`);
-      setWeather(data);
-    });
-    console.log(data);
+    const data = await getFormattedWeatherData({ ...query, units });
+    toast.success(`Fetched weather data for ${data.name}, ${data.country}`);
+    setWeather(data);
   };
 
   useEffect(() => {
@@ -55,12 +71,12 @@ const App = () => {
       <TopButtons
         setQuery={setQuery}
         favorites={favorites}
-        fetchFavorites={fetchFavorites}
+        removeFavorite={removeFavorite}
       />
       <Inputs
         setQuery={setQuery}
         setUnits={setUnits}
-        fetchFavorites={fetchFavorites}
+        addFavorite={addFavorite}
       />
       {weather && (
         <>
