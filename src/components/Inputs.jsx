@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { BiCurrentLocation, BiHeart, BiSearch } from "react-icons/bi";
+import { BiCurrentLocation, BiSearch } from "react-icons/bi";
 import { AiFillHeart } from "react-icons/ai";
-import { addFavorite } from "../api";
 
-const inputs = ({ setQuery, setUnits, fetchFavorites }) => {
+const Inputs = ({ setQuery, setUnits, addFavorite }) => {
   const [city, setCity] = useState("");
 
   const handleSearchClick = () => {
@@ -13,11 +12,16 @@ const inputs = ({ setQuery, setUnits, fetchFavorites }) => {
     }
   };
 
-  const handleAddFavorite = async () => {
+  const handleAddFavorite = () => {
     if (city) {
-      await addFavorite(city);
+      // Create a favorite object with unique ID
+      // Capitalize each word
+    const formattedCity = city
+      .trim()
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+      addFavorite({ id: Date.now(), name: formattedCity  });
       setCity("");
-      fetchFavorites();
     }
   };
 
@@ -84,4 +88,4 @@ const inputs = ({ setQuery, setUnits, fetchFavorites }) => {
   );
 };
 
-export default inputs;
+export default Inputs;
